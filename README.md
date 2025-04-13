@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# Guía de Despliegue: Docker, AWS ECR y ECS
 
-First, run the development server:
+Este archivo describe los pasos necesarios para construir, cargar y desplegar una aplicación Dockerizada en AWS utilizando Elastic Container Service (ECS).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 1. Construir la imagen Docker
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Primero, asegúrate de tener el archivo `Dockerfile` en el directorio raíz de tu proyecto.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. Autenticación en AWS ECR
+Para subir la imagen a AWS ECR, primero necesitas autenticarte.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Autenticación en AWS ECR
+aws ecr get-login-password --region tu-region | docker login --username AWS --password-stdin tu-id-de-cuenta.dkr.ecr.tu-region.amazonaws.com
 
-## Learn More
+3. Crear un repositorio en AWS ECR
+# Crear un repositorio en AWS ECR
+aws ecr create-repository --repository-name nombre-de-tu-repositorio --region tu-region
+# Etiquetar la imagen Docker para ECR
+docker tag nombre-de-tu-imagen:latest tu-id-de-cuenta.dkr.ecr.tu-region.amazonaws.com/nombre-de-tu-repositorio:latest
+# Subir la imagen Docker a ECR
+docker push tu-id-de-cuenta.dkr.ecr.tu-region.amazonaws.com/nombre-de-tu-repositorio:latest
+Una vez que la imagen esté en ECR, puedes usar Amazon ECS para ejecutar el contenedor. Primero, crea una tarea en ECS con la imagen Docker cargada.
 
-To learn more about Next.js, take a look at the following resources:
+Ve a la consola de Amazon ECS.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Crea una nueva Definición de tarea:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Selecciona "Fargate" o "EC2" dependiendo de tus necesidades.
 
-## Deploy on Vercel
+En la sección Contenedor, configura los parámetros con la URI de la imagen en ECR, por ejemplo, tu-id-de-cuenta.dkr.ecr.tu-region.amazonaws.com/nombre-de-tu-repositorio:latest.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Crea un Servicio ECS para ejecutar la tarea:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Configura el servicio de ECS para usar la definición de tarea creada.
+
+Define el número de instancias o réplicas que deseas ejecutar.
+
+Configura el Load Balancer (si es necesario) y las configuraciones de red.
